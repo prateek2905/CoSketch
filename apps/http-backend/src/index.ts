@@ -3,11 +3,10 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { middleware } from "./middleware";
 import { JWT_SECRET } from "@repo/backend-common/config";
-import { PrismaClient } from "@prisma/client";
+import { prismaClient } from "@repo/db/client";
 import { CreateRoomSchema, SigninSchema, SignupSchema } from "@repo/common/types";
 
 const app = express();
-const prisma = new PrismaClient();
 
 app.use(express.json());
 
@@ -22,7 +21,7 @@ app.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-        const user = await prisma.user.create({
+        const user = await prismaClient.user.create({
             data: { email, password: hashedPassword, name },
         });
         res.json({ userId: user.id });
@@ -39,7 +38,7 @@ app.post("/signin", async (req, res) => {
     }
 
     const { email, password } = parsed.data;
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prismaClient.user.findUnique({ where: { email } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
         res.status(403).json({ message: "Invalid credentials" });
@@ -61,7 +60,7 @@ app.post("/room", middleware, async (req, res) => {
     const userId: number = req.userId;
 
     try {
-        const room = await prisma.room.create({
+        const room = await prismaClient.room.create({
             data: { slug: parsed.data.slug, adminId: userId },
         });
         res.json({ roomId: room.id });

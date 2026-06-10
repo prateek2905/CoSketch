@@ -20,12 +20,12 @@ importers:
 
   apps/http-backend:
     dependencies:
-      '@prisma/client':
-        specifier: ^6.0.0
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.2))(typescript@5.9.2)
       '@repo/backend-common':
         specifier: workspace:*
         version: link:../../packages/backend-common
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
@@ -54,9 +54,6 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.42
-      prisma:
-        specifier: ^6.0.0
-        version: 6.19.3(typescript@5.9.2)
 
   apps/web:
     dependencies:
@@ -100,6 +97,9 @@ importers:
       '@repo/backend-common':
         specifier: workspace:*
         version: link:../../packages/backend-common
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.3
@@ -138,6 +138,19 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+
+  packages/db:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.0.0
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.2))(typescript@5.9.2)
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      prisma:
+        specifier: ^6.0.0
+        version: 6.19.3(typescript@5.9.2)
 
   packages/eslint-config:
     devDependencies:
