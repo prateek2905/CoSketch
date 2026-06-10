@@ -1,4 +1,6 @@
+import "dotenv/config";
 import express from "express";
+import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { middleware } from "./middleware";
@@ -8,6 +10,7 @@ import { CreateRoomSchema, SigninSchema, SignupSchema } from "@repo/common/types
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
@@ -67,6 +70,43 @@ app.post("/room", middleware, async (req, res) => {
     } catch {
         res.status(400).json({ message: "Room already exists" });
     }
+});
+
+app.get("/chats", middleware, async (req, res) => {
+    const roomId = Number(req.query.roomId);
+    if (!roomId) {
+        res.status(400).json({ message: "Invalid roomId" });
+        return;
+    }
+
+    try {
+        const messages = await prismaClient.chat.findMany({
+            where: { roomId },
+            orderBy: { id: "desc" },
+            take: 50,
+            include: { user: { select: { id: true, name: true } } },
+        });
+        res.json({ messages });
+    } catch {
+        res.status(400).json({ message: "Something went wrong" });
+    }
+});
+
+app.get("/room/:slug", middleware, async (req, res) => {
+    const slug = req.params.slug as string;
+    const room = await prismaClient.room.findFirst({ where: { slug } });
+    if (!room) {
+        res.status(404).json({ message: "Room not found" });
+        return;
+    }
+    res.json({ room });
+});
+
+app.get("/rooms", middleware, async (req, res) => {
+    // @ts-ignore
+    const userId: number = req.userId;
+    const rooms = await prismaClient.room.findMany({ where: { adminId: userId } });
+    res.json({ rooms });
 });
 
 app.listen(3001, () => {
