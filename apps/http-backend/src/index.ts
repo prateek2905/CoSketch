@@ -72,7 +72,7 @@ app.post("/room", middleware, async (req, res) => {
     }
 });
 
-app.get("/chats", middleware, async (req, res) => {
+app.get("/shapes", middleware, async (req, res) => {
     const roomId = Number(req.query.roomId);
     if (!roomId) {
         res.status(400).json({ message: "Invalid roomId" });
@@ -80,13 +80,11 @@ app.get("/chats", middleware, async (req, res) => {
     }
 
     try {
-        const messages = await prismaClient.chat.findMany({
-            where: { roomId },
-            orderBy: { id: "desc" },
-            take: 50,
-            include: { user: { select: { id: true, name: true } } },
+        const shapes = await prismaClient.shape.findMany({
+            where: { roomId, isDeleted: false },
+            orderBy: { createdAt: "asc" },
         });
-        res.json({ messages });
+        res.json({ shapes });
     } catch {
         res.status(400).json({ message: "Something went wrong" });
     }

@@ -29,6 +29,15 @@ function checkUser(token: string): number | null {
     }
 }
 
+function broadcastToRoom(roomId: string, payload: object, options?: { exclude?: WebSocket }) {
+    const message = JSON.stringify(payload);
+    users.forEach((user) => {
+        if (!user.rooms.includes(roomId)) return;
+        if (options?.exclude && user.ws === options.exclude) return;
+        user.ws.send(message);
+    });
+}
+
 wss.on("connection", function connection(ws, request) {
     const url = request.url;
     if (!url) {
@@ -74,28 +83,113 @@ wss.on("connection", function connection(ws, request) {
             user.rooms = user.rooms.filter((roomId) => roomId !== parsedData.roomId);
         }
 
-        if (parsedData.type === "chat") {
-            const { roomId, message } = parsedData;
+        if (parsedData.type === "shape:create") {
+            const { roomId, shape } = parsedData;
 
-            await prismaClient.chat.create({
-                data: {
-                    roomId: Number(roomId),
-                    message,
+            try {
+                await prismaClient.shape.create({
+                    data: {
+                        id: shape.id,
+                        roomId: Number(roomId),
+                        userId,
+                        type: shape.type,
+                        x: shape.x,
+                        y: shape.y,
+                        width: shape.width,
+                        height: shape.height,
+                        angle: shape.angle,
+                        strokeColor: shape.strokeColor,
+                        backgroundColor: shape.backgroundColor,
+                        strokeWidth: shape.strokeWidth,
+                        strokeStyle: shape.strokeStyle,
+                        fillStyle: shape.fillStyle,
+                        opacity: shape.opacity,
+                        points: shape.points,
+                        text: shape.text,
+                        fontSize: shape.fontSize,
+                        fontFamily: shape.fontFamily,
+                    },
+                });
+            } catch {
+                return;
+            }
+
+            broadcastToRoom(roomId, {
+                type: "shape:create",
+                roomId,
+                shape,
+            });
+        }
+
+        if (parsedData.type === "shape:update") {
+            const { roomId, shape } = parsedData;
+
+            try {
+                await prismaClient.shape.update({
+                    where: { id: shape.id },
+                    data: {
+                        x: shape.x,
+                        y: shape.y,
+                        width: shape.width,
+                        height: shape.height,
+                        angle: shape.angle,
+                        strokeColor: shape.strokeColor,
+                        backgroundColor: shape.backgroundColor,
+                        strokeWidth: shape.strokeWidth,
+                        strokeStyle: shape.strokeStyle,
+                        fillStyle: shape.fillStyle,
+                        opacity: shape.opacity,
+                        points: shape.points,
+                        text: shape.text,
+                        fontSize: shape.fontSize,
+                        fontFamily: shape.fontFamily,
+                        version: { increment: 1 },
+                    },
+                });
+            } catch {
+                return;
+            }
+
+            broadcastToRoom(roomId, {
+                type: "shape:update",
+                roomId,
+                shape,
+            });
+        }
+
+        if (parsedData.type === "shape:delete") {
+            const { roomId, shapeId } = parsedData;
+
+            try {
+                await prismaClient.shape.update({
+                    where: { id: shapeId },
+                    data: { isDeleted: true },
+                });
+            } catch {
+                return;
+            }
+
+            broadcastToRoom(roomId, {
+                type: "shape:delete",
+                roomId,
+                shapeId,
+            });
+        }
+
+        if (parsedData.type === "cursor:move") {
+            const { roomId, x, y } = parsedData;
+
+            broadcastToRoom(
+                roomId,
+                {
+                    type: "cursor:move",
+                    roomId,
                     userId,
+                    x,
+                    y,
                 },
-            });
-
-            users.forEach((user) => {
-                if (user.rooms.includes(roomId)) {
-                    user.ws.send(
-                        JSON.stringify({
-                            type: "chat",
-                            message,
-                            roomId,
-                        })
-                    );
-                }
-            });
+                { exclude: ws }
+            );
         }
     });
 

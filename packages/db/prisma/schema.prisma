@@ -8,12 +8,12 @@ datasource db {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
   password String
   name     String
   rooms    Room[]
-  chats    Chat[]
+  shapes   Shape[]
 }
 
 model Room {
@@ -22,14 +22,35 @@ model Room {
   createdAt DateTime @default(now())
   adminId   Int
   admin     User     @relation(fields: [adminId], references: [id])
-  chats     Chat[]
+  shapes    Shape[]
 }
 
-model Chat {
-  id      Int    @id @default(autoincrement())
-  roomId  Int
-  userId  Int
-  message String
-  room    Room   @relation(fields: [roomId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
+model Shape {
+  id              String   @id
+  roomId          Int
+  userId          Int
+  type            String
+  x               Float
+  y               Float
+  width           Float    @default(0)
+  height          Float    @default(0)
+  angle           Float    @default(0)
+  strokeColor     String   @default("#1e1e1e")
+  backgroundColor String   @default("transparent")
+  strokeWidth     Float    @default(1)
+  strokeStyle     String   @default("solid")
+  fillStyle       String   @default("hachure")
+  opacity         Float    @default(100)
+  points          Json?
+  text            String?
+  fontSize        Float?
+  fontFamily      String?
+  version         Int      @default(1)
+  isDeleted       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  room            Room     @relation(fields: [roomId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([roomId])
 }
