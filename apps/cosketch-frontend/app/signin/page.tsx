@@ -33,7 +33,7 @@ export default function SignInPage() {
     try {
       const { token } = await signin({ email, password });
       localStorage.setItem("cosketch-token", token);
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
