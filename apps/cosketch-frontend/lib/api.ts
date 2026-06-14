@@ -60,7 +60,7 @@ export function getRoom(slug: string, token: string) {
 }
 
 export function getRooms(token: string) {
-  return getJson<{ rooms: Room[] }>("/rooms", token);
+  return getJson<{ rooms: Room[]; joinedRooms: (Room & { joinedAt: string })[] }>("/rooms", token);
 }
 
 export function getShapes(roomId: number, token: string) {

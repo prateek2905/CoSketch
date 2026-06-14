@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const token = useAuthToken();
 
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [joinedRooms, setJoinedRooms] = useState<(Room & { joinedAt: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [roomsError, setRoomsError] = useState<string | null>(null);
 
@@ -25,7 +26,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!token) return;
     getRooms(token)
-      .then(({ rooms }) => setRooms(rooms))
+      .then(({ rooms, joinedRooms }) => {
+        setRooms(rooms);
+        setJoinedRooms(joinedRooms);
+      })
       .catch((err) => setRoomsError(err instanceof Error ? err.message : "Something went wrong"))
       .finally(() => setLoading(false));
   }, [token]);
@@ -142,6 +146,27 @@ export default function DashboardPage() {
             </ul>
           )}
         </div>
+
+        {!loading && !roomsError && joinedRooms.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-sm font-semibold text-zinc-900 dark:text-white">Recently visited</h2>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {joinedRooms.map((room) => (
+                <li key={room.id}>
+                  <Link
+                    href={`/canvas/${encodeURIComponent(room.slug)}`}
+                    className="block rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-indigo-900 dark:hover:bg-indigo-950/20"
+                  >
+                    <p className="font-medium text-zinc-900 dark:text-white">{room.slug}</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      Visited {new Date(room.joinedAt).toLocaleDateString()}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </main>
     </div>
   );
