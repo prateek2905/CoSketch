@@ -7,13 +7,19 @@ import { AuthCard } from "@/components/AuthCard";
 import { FormField } from "@/components/FormField";
 import { signin } from "@/lib/api";
 
-function RegisteredBanner() {
+function StatusBanner() {
   const searchParams = useSearchParams();
-  if (searchParams.get("registered") !== "1") return null;
+  let message: string | null = null;
+  if (searchParams.get("registered") === "1") {
+    message = "Account created. You can sign in now.";
+  } else if (searchParams.get("reset") === "1") {
+    message = "Password updated. You can sign in now.";
+  }
+  if (!message) return null;
 
   return (
     <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-      Account created. You can sign in now.
+      {message}
     </p>
   );
 }
@@ -56,7 +62,7 @@ export default function SignInPage() {
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Suspense fallback={null}>
-          <RegisteredBanner />
+          <StatusBanner />
         </Suspense>
 
         <FormField
@@ -68,15 +74,20 @@ export default function SignInPage() {
           autoComplete="email"
           required
         />
-        <FormField
-          label="Password"
-          type="password"
-          value={password}
-          onChange={setPassword}
-          placeholder="••••••••"
-          autoComplete="current-password"
-          required
-        />
+        <div className="flex flex-col gap-1.5">
+          <FormField
+            label="Password"
+            type="password"
+            value={password}
+            onChange={setPassword}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+          />
+          <Link href="/forgot-password" className="self-end text-xs font-medium text-indigo-600 hover:text-indigo-500">
+            Forgot password?
+          </Link>
+        </div>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

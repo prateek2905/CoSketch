@@ -36,6 +36,14 @@ export function signup(input: { name: string; email: string; password: string })
   return postJson<{ userId: number }>("/signup", input);
 }
 
+export function forgotPassword(input: { email: string }) {
+  return postJson<{ message: string }>("/forgot-password", input);
+}
+
+export function resetPassword(input: { token: string; password: string }) {
+  return postJson<{ message: string }>("/reset-password", input);
+}
+
 export interface Room {
   id: number;
   slug: string;
