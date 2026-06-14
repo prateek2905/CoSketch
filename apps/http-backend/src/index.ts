@@ -163,6 +163,16 @@ app.get("/room/:slug", middleware, async (req, res) => {
         return;
     }
 
+    // @ts-ignore
+    const userId: number = req.userId;
+    if (room.adminId !== userId) {
+        await prismaClient.roomMember.upsert({
+            where: { userId_roomId: { userId, roomId: room.id } },
+            update: { joinedAt: new Date() },
+            create: { userId, roomId: room.id },
+        });
+    }
+
     res.json({ room });
 });
 
@@ -170,7 +180,16 @@ app.get("/rooms", middleware, async (req, res) => {
     // @ts-ignore
     const userId: number = req.userId;
     const rooms = await prismaClient.room.findMany({ where: { adminId: userId } });
-    res.json({ rooms });
+
+    const memberships = await prismaClient.roomMember.findMany({
+        where: { userId, room: { adminId: { not: userId } } },
+        include: { room: true },
+        orderBy: { joinedAt: "desc" },
+        take: 10,
+    });
+    const joinedRooms = memberships.map(({ room, joinedAt }) => ({ ...room, joinedAt }));
+
+    res.json({ rooms, joinedRooms });
 });
 
 app.listen(3002, () => {
