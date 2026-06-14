@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter cosketch-frontend build
-    startCommand: pnpm --filter cosketch-frontend start -- -p $PORT
+    startCommand: pnpm --filter cosketch-frontend start
     envVars:
       - key: NODE_VERSION
         value: 20
