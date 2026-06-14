@@ -60,6 +60,17 @@ export function TextIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function FitViewIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M9 3H5a2 2 0 0 0-2 2v4" />
+      <path d="M15 3h4a2 2 0 0 1 2 2v4" />
+      <path d="M9 21H5a2 2 0 0 1-2-2v-4" />
+      <path d="M15 21h4a2 2 0 0 0 2-2v-4" />
+    </svg>
+  );
+}
+
 export function EraserIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" {...props}>
