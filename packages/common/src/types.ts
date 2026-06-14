@@ -11,6 +11,15 @@ export const SigninSchema = z.object({
     password: z.string(),
 });
 
+export const ForgotPasswordSchema = z.object({
+    email: z.email(),
+});
+
+export const ResetPasswordSchema = z.object({
+    token: z.string().min(1),
+    password: z.string().min(6),
+});
+
 export const CreateRoomSchema = z.object({
     slug: z.string().min(1).max(50),
 });

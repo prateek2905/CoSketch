@@ -1,12 +1,17 @@
 import "dotenv/config";
+import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { Resend } from "resend";
 import { middleware } from "./middleware";
-import { JWT_SECRET } from "@repo/backend-common/config";
+import { JWT_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL, FRONTEND_URL } from "@repo/backend-common/config";
 import { prismaClient } from "@repo/db/client";
-import { CreateRoomSchema, SigninSchema, SignupSchema } from "@repo/common/types";
+import { CreateRoomSchema, ForgotPasswordSchema, ResetPasswordSchema, SigninSchema, SignupSchema } from "@repo/common/types";
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 const app = express();
 
@@ -50,6 +55,66 @@ app.post("/signin", async (req, res) => {
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET);
     res.json({ token });
+});
+
+app.post("/forgot-password", async (req, res) => {
+    const parsed = ForgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ message: "Invalid input" });
+        return;
+    }
+
+    const genericResponse = { message: "If an account exists for that email, a reset link has been sent." };
+
+    const user = await prismaClient.user.findUnique({ where: { email: parsed.data.email } });
+    if (!user) {
+        res.json(genericResponse);
+        return;
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    await prismaClient.user.update({
+        where: { id: user.id },
+        data: { resetToken: token, resetTokenExpiry: new Date(Date.now() + RESET_TOKEN_TTL_MS) },
+    });
+
+    const resetUrl = `${FRONTEND_URL}/reset-password/${token}`;
+    if (resend) {
+        await resend.emails.send({
+            from: RESEND_FROM_EMAIL,
+            to: user.email,
+            subject: "Reset your CoSketch password",
+            html: `<p>Click the link below to reset your CoSketch password. This link expires in 1 hour.</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
+        });
+    } else {
+        console.warn(`RESEND_API_KEY not set — password reset link for ${user.email}: ${resetUrl}`);
+    }
+
+    res.json(genericResponse);
+});
+
+app.post("/reset-password", async (req, res) => {
+    const parsed = ResetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+        res.status(400).json({ message: "Invalid input" });
+        return;
+    }
+
+    const { token, password } = parsed.data;
+    const user = await prismaClient.user.findUnique({ where: { resetToken: token } });
+
+    if (!user || !user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+        res.status(400).json({ message: "Invalid or expired reset link" });
+        return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prismaClient.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null },
+    });
+
+    res.json({ message: "Password updated" });
 });
 
 app.post("/room", middleware, async (req, res) => {
@@ -97,6 +162,7 @@ app.get("/room/:slug", middleware, async (req, res) => {
         res.status(404).json({ message: "Room not found" });
         return;
     }
+
     res.json({ room });
 });
 
