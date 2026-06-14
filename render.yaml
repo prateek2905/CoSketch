@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: cosketch-frontend
+    env: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter cosketch-frontend build
+    startCommand: pnpm --filter cosketch-frontend start -- -p $PORT
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: NEXT_PUBLIC_HTTP_BACKEND_URL
+        value: https://cosketch-http-backend.onrender.com
+      - key: NEXT_PUBLIC_WS_BACKEND_URL
+        value: wss://cosketch-ws-backend.onrender.com
+
+  - type: web
+    name: cosketch-http-backend
+    env: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @repo/db exec prisma generate
+    startCommand: pnpm --filter http-backend start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: "CoSketch <onboarding@resend.dev>"
+      - key: FRONTEND_URL
+        value: https://cosketch-frontend.onrender.com
+
+  - type: web
+    name: cosketch-ws-backend
+    env: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @repo/db exec prisma generate
+    startCommand: pnpm --filter ws-backend start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
