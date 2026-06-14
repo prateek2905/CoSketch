@@ -289,10 +289,16 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (textEditor) return;
+
+    const currentTool = toolRef.current;
+    // Deferred to pointer-up: starting the text editor here would mount the
+    // autoFocused textarea before the native mousedown's focus-shift default
+    // action runs, which immediately blurs it back to <body>.
+    if (currentTool === "text") return;
+
     e.currentTarget.setPointerCapture(e.pointerId);
 
     const { x, y } = getCanvasPoint(e);
-    const currentTool = toolRef.current;
 
     if (currentTool === "select") {
       const hit = hitTestTopmost(x, y);
@@ -313,11 +319,6 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
         if (selectedIdRef.current === hit.id) setSelectedId(null);
         redraw();
       }
-      return;
-    }
-
-    if (currentTool === "text") {
-      setTextEditor({ x, y });
       return;
     }
 
@@ -374,6 +375,12 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
   function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+
+    if (toolRef.current === "text" && !textEditor) {
+      const { x, y } = getCanvasPoint(e);
+      setTextEditor({ x, y });
+      return;
     }
 
     const drag = dragRef.current;
