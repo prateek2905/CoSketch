@@ -8,21 +8,36 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
-  password String
-  name     String
-  rooms    Room[]
-  shapes   Shape[]
+  id               Int          @id @default(autoincrement())
+  email            String       @unique
+  password         String
+  name             String
+  resetToken       String?      @unique
+  resetTokenExpiry DateTime?
+  rooms            Room[]
+  shapes           Shape[]
+  memberships      RoomMember[]
 }
 
 model Room {
-  id        Int      @id @default(autoincrement())
-  slug      String   @unique
-  createdAt DateTime @default(now())
+  id        Int          @id @default(autoincrement())
+  slug      String       @unique
+  createdAt DateTime     @default(now())
   adminId   Int
-  admin     User     @relation(fields: [adminId], references: [id])
+  admin     User         @relation(fields: [adminId], references: [id])
   shapes    Shape[]
+  members   RoomMember[]
+}
+
+model RoomMember {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  roomId   Int
+  joinedAt DateTime @default(now())
+  user     User     @relation(fields: [userId], references: [id])
+  room     Room     @relation(fields: [roomId], references: [id])
+
+  @@unique([userId, roomId])
 }
 
 model Shape {
