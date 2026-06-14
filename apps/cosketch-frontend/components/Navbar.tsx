@@ -15,7 +15,7 @@ export function Navbar() {
   const router = useRouter();
   const storedToken = useStoredToken();
   const [loggedOut, setLoggedOut] = useState(false);
-  const signedIn = storedToken !== null && !loggedOut;
+  const signedIn = !!storedToken && !loggedOut;
 
   function handleLogout() {
     clearStoredToken();

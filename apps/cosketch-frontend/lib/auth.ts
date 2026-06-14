@@ -14,12 +14,14 @@ function getSnapshot(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-function getServerSnapshot(): string | null {
-  return null;
+// `undefined` means "not yet known" (server/hydration render, before localStorage
+// can be read) — distinct from `null`, which means "confirmed no token".
+function getServerSnapshot(): string | null | undefined {
+  return undefined;
 }
 
 /** Reactive, SSR-safe read of the stored auth token (re-syncs on cross-tab changes). */
-export function useStoredToken(): string | null {
+export function useStoredToken(): string | null | undefined {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
