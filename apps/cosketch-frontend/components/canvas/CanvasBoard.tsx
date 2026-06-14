@@ -7,9 +7,10 @@ import { useRoomSocket } from "@/lib/ws-client";
 import { drawShape, drawSelectionOutline } from "@/lib/canvas/draw";
 import { createShape } from "@/lib/canvas/shape-factory";
 import { getShapeBounds, hitTestShape, normalizeShape } from "@/lib/canvas/geometry";
+import { exportToPng, exportToSvg } from "@/lib/canvas/export";
 import { Toolbar } from "./Toolbar";
 import { StylePanel } from "./StylePanel";
-import { FitViewIcon } from "./icons";
+import { CopyIcon, DownloadIcon, FitViewIcon } from "./icons";
 
 interface CanvasBoardProps {
   roomId: number;
@@ -61,10 +62,17 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
   const lastCursorSentAtRef = useRef(0);
 
   const [tool, setTool] = useState<Tool>("select");
-  const [style, setStyle] = useState<StyleOptions>({ strokeColor: "#1e1e1e", strokeWidth: 2 });
+  // Default to a stroke color visible against the canvas background, which
+  // tracks the OS color scheme (white canvas in light mode, black in dark mode).
+  const [style, setStyle] = useState<StyleOptions>(() => ({
+    strokeColor: window.matchMedia("(prefers-color-scheme: dark)").matches ? "#ffffff" : "#1e1e1e",
+    strokeWidth: 2,
+  }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [textEditor, setTextEditor] = useState<Point | null>(null);
   const [remoteCursors, setRemoteCursors] = useState<Map<number, Point>>(new Map());
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [camera, setCamera] = useState<Camera>(DEFAULT_CAMERA);
   const cameraRef = useRef(camera);
 
@@ -158,6 +166,22 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
       y: minY + contentHeight / 2 - viewHeight / 2 / clampedZoom,
     });
   }, [applyCamera]);
+
+  function handleExport(format: "png" | "svg") {
+    const shapes = Array.from(shapesRef.current.values());
+    if (format === "png") {
+      exportToPng(shapes, slug);
+    } else {
+      exportToSvg(shapes, slug);
+    }
+    setExportMenuOpen(false);
+  }
+
+  async function handleCopyLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 1500);
+  }
 
   const socket = useRoomSocket(roomId, token, {
     onShapeCreate: (shape) => {
@@ -524,6 +548,15 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
         </Link>
         <button
           type="button"
+          title="Copy invite link"
+          aria-label="Copy invite link"
+          onClick={handleCopyLink}
+          className="pointer-events-auto flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white/95 text-zinc-700 shadow-lg backdrop-blur-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-200 dark:hover:bg-zinc-800"
+        >
+          {linkCopied ? <span className="text-xs font-medium">Copied!</span> : <CopyIcon className="h-4 w-4" />}
+        </button>
+        <button
+          type="button"
           title="Fit to content"
           aria-label="Fit to content"
           onClick={fitToContent}
@@ -531,6 +564,38 @@ export function CanvasBoard({ roomId, slug, token, initialShapes }: CanvasBoardP
         >
           <FitViewIcon className="h-4 w-4" />
         </button>
+        <div className="pointer-events-auto relative">
+          <button
+            type="button"
+            title="Download"
+            aria-label="Download"
+            aria-expanded={exportMenuOpen}
+            onClick={() => setExportMenuOpen((open) => !open)}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-zinc-200 bg-white/95 text-zinc-700 shadow-lg backdrop-blur-sm transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <DownloadIcon className="h-4 w-4" />
+          </button>
+          {exportMenuOpen && (
+            <div className="absolute top-11 left-0 flex flex-col gap-1 rounded-xl border border-zinc-200 bg-white/95 p-1.5 shadow-lg backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/95">
+              <button
+                type="button"
+                aria-label="Download PNG"
+                onClick={() => handleExport("png")}
+                className="rounded-lg px-3 py-1.5 text-left text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Download PNG
+              </button>
+              <button
+                type="button"
+                aria-label="Download SVG"
+                onClick={() => handleExport("svg")}
+                className="rounded-lg px-3 py-1.5 text-left text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                Download SVG
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="pointer-events-none absolute top-4 left-1/2 z-20 -translate-x-1/2">

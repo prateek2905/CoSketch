@@ -2,7 +2,7 @@
 
 import type { StyleOptions } from "@/lib/canvas/types";
 
-const STROKE_COLORS = ["#1e1e1e", "#e03131", "#2f9e44", "#1971c2", "#f08c00"];
+const STROKE_COLORS = ["#1e1e1e", "#ffffff", "#e03131", "#2f9e44", "#1971c2", "#f08c00"];
 const STROKE_WIDTHS = [1, 2, 4];
 
 interface StylePanelProps {
