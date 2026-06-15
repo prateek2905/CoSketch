@@ -9,7 +9,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: NEXT_PUBLIC_HTTP_BACKEND_URL
-        value: https://cosketch-http-backend.onrender.com
+        value: https://cosketch-http-backend-bjsc.onrender.com
       - key: NEXT_PUBLIC_WS_BACKEND_URL
         value: wss://cosketch-ws-backend.onrender.com
 
