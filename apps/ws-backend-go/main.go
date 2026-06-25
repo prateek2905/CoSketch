@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"cosketch/apps/ws-backend-go/internal/config"
+	"cosketch/apps/ws-backend-go/internal/auth"
 
 	"net/http"
 )
@@ -31,6 +32,13 @@ func main() {
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
+		token := r.URL.Query().Get("token")
+		userID, err := auth.VerifyToken(token, cfg.JWTSecret)
+		if err!=nil{
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if(err != nil){
 			log.Println("upgrade error:", err)
