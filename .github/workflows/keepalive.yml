@@ -23,7 +23,6 @@ jobs:
         url:
           - https://cosketch-frontend.onrender.com
           - https://cosketch-http-backend-bjsc.onrender.com
-          - https://cosketch-ws-backend.onrender.com
           - https://cosketch-ws-backend-go.onrender.com/healthz
     steps:
       - name: Ping ${{ matrix.url }}

@@ -11,7 +11,7 @@ services:
       - key: NEXT_PUBLIC_HTTP_BACKEND_URL
         value: https://cosketch-http-backend-bjsc.onrender.com
       - key: NEXT_PUBLIC_WS_BACKEND_URL
-        value: wss://cosketch-ws-backend.onrender.com
+        value: wss://cosketch-ws-backend-go.onrender.com
 
   - type: web
     name: cosketch-http-backend
