@@ -1,0 +1,32 @@
+name: keep-alive
+
+# Render free-tier web services spin down after ~15 min of inactivity, causing a
+# cold-start (~30-60s) on the next request. This pings each service so it stays
+# awake. Any HTTP request wakes the service, so we ignore the status code (a 404
+# still counts as traffic).
+#
+# NOTE: GitHub scheduled workflows are best-effort — under runner load they can
+# fire late or skip a tick entirely. If a service still sleeps, move to an
+# external monitor (cron-job.org / UptimeRobot, 5-min interval) which is punctual.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *" # every 10 minutes
+  workflow_dispatch: {} # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        url:
+          - https://cosketch-frontend.onrender.com
+          - https://cosketch-http-backend-bjsc.onrender.com
+          - https://cosketch-ws-backend.onrender.com
+          - https://cosketch-ws-backend-go.onrender.com/healthz
+    steps:
+      - name: Ping ${{ matrix.url }}
+        run: |
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 60 "${{ matrix.url }}" || echo "000")
+          echo "${{ matrix.url }} -> $code"
