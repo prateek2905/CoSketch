@@ -1,0 +1,30 @@
+# sqlc.yaml — configuration for `sqlc generate`.
+#
+# sqlc reads your schema (schema.sql) + queries (query.sql) and generates
+# type-safe Go: a Queries struct with CreateShape/UpdateShape/SoftDeleteShape
+# methods, each taking a typed params struct. No reflection, no runtime SQL string
+# building — the SQL is checked against the schema at GENERATE time.
+#
+# WHY sqlc over a heavy ORM (like GORM) or hand-written pgx: you write real SQL
+# (so you always know exactly what runs), but you still get compile-time types and
+# autocompletion. It's the closest thing to Prisma's type-safety without an ORM.
+#
+# To use: from this db/ directory run `sqlc generate`. It writes the generated
+# package to ../internal/store/gen. You'd then wrap those generated Queries from
+# store.go. (The reference store.go uses direct pgx instead, so it runs without
+# this step — see the note at the top of store.go.)
+#
+# Course reference: Day 5, Task 5.2.
+
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "schema.sql"
+    queries: "query.sql"
+    gen:
+      go:
+        package: "gen"
+        out: "../internal/store/gen"
+        sql_package: "pgx/v5"
+        emit_json_tags: false
+        emit_pointers_for_null_types: true
